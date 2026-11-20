@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { isDemoAuthenticated, demoLogin, demoLogout } from "@/lib/demo-auth";
 
 type Entry = {
   id: string;
@@ -16,10 +17,10 @@ type Entry = {
 const STORAGE_KEY = "tipico-waitlist-demo";
 
 /**
- * WAITLIST DEMO — SIN BASE DE DATOS
- * Los datos viven solo en localStorage de este navegador/dispositivo.
- * No hay sincronización entre dispositivos ni persistencia en servidor.
- * Preparado para sustituir por API + DB (Supabase, PlanetScale, etc.) en producción.
+ * WAITLIST — DEMO SIN BASE DE DATOS
+ * Datos solo en localStorage de este navegador.
+ * Vista Staff protegida con el mismo acceso demo de Business.
+ * En producción: backend + auth real + roles.
  */
 
 export default function WaitlistPage() {
@@ -28,7 +29,9 @@ export default function WaitlistPage() {
   const [party, setParty] = useState(2);
   const [phone, setPhone] = useState("");
   const [submitted, setSubmitted] = useState<Entry | null>(null);
-  const [isStaff, setIsStaff] = useState(false);
+  const [mode, setMode] = useState<"client" | "staff-login" | "staff">("client");
+  const [pass, setPass] = useState("");
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     try {
@@ -74,36 +77,99 @@ export default function WaitlistPage() {
     save(entries.map((e) => (e.id === id ? { ...e, status } : e)));
   }
 
+  function handleStaffLogin(e: React.FormEvent) {
+    e.preventDefault();
+    const res = demoLogin(pass);
+    if (res.ok) {
+      setMode("staff");
+      setAuthError("");
+      setPass("");
+    } else {
+      setAuthError(res.message);
+    }
+  }
+
+  function enterStaff() {
+    if (isDemoAuthenticated()) {
+      setMode("staff");
+    } else {
+      setMode("staff-login");
+    }
+  }
+
   const active = entries.filter((e) => !["atendido", "cancelado"].includes(e.status));
 
   return (
     <div className="min-h-screen bg-[#F1EBDD]">
       <header className="sticky top-0 z-20 bg-[#171715] text-[#F1EBDD] px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="font-serif text-xl">
+        <Link href="/" className="font-serif text-xl tracking-tight">
           TÍPICO
         </Link>
         <h1 className="text-sm tracking-widest uppercase">Waitlist</h1>
-        <button onClick={() => setIsStaff(!isStaff)} className="text-[#B89B69] text-sm">
-          {isStaff ? "Cliente" : "Staff"}
-        </button>
+        {mode === "staff" ? (
+          <button
+            onClick={() => {
+              setMode("client");
+            }}
+            className="text-[#B89B69] text-sm"
+          >
+            Cliente
+          </button>
+        ) : (
+          <button onClick={enterStaff} className="text-[#B89B69] text-sm">
+            Staff
+          </button>
+        )}
       </header>
 
       <div className="max-w-lg mx-auto px-4 py-6">
         <div className="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-relaxed">
-          <strong>Modo demostración (sin base de datos):</strong> los registros se guardan solo en
-          este navegador (localStorage). No se sincronizan entre dispositivos ni se envían a un
-          servidor. En producción se conectaría a una base de datos centralizada.
+          <strong>Demo sin base de datos:</strong> los registros viven solo en este navegador
+          (localStorage). No hay sincronización entre dispositivos. La vista Staff requiere acceso
+          demo. En producción: backend + autenticación real + roles.
         </div>
 
-        {!isStaff && !submitted && (
+        {/* STAFF LOGIN */}
+        {mode === "staff-login" && (
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#77736B]/10 space-y-4">
+            <h2 className="font-serif text-xl">Acceso personal</h2>
+            <p className="text-sm text-[#77736B]">
+              Solo personal autorizado. Usa la contraseña de demostración.
+            </p>
+            <form onSubmit={handleStaffLogin} className="space-y-3">
+              <input
+                type="password"
+                value={pass}
+                onChange={(e) => setPass(e.target.value)}
+                placeholder="Contraseña demo"
+                className="w-full border border-[#77736B]/20 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#B89B69]"
+              />
+              {authError && <p className="text-red-600 text-xs">{authError}</p>}
+              <button
+                type="submit"
+                className="w-full bg-[#171715] text-[#F1EBDD] font-medium py-3 rounded-lg"
+              >
+                Entrar
+              </button>
+            </form>
+            <button
+              onClick={() => setMode("client")}
+              className="w-full text-sm text-[#77736B]"
+            >
+              Volver a vista cliente
+            </button>
+          </div>
+        )}
+
+        {/* CLIENT REGISTER */}
+        {mode === "client" && !submitted && (
           <form
             onSubmit={register}
             className="bg-white rounded-2xl p-6 shadow-sm border border-[#77736B]/10 space-y-4"
           >
             <h2 className="font-serif text-xl">Apuntarse a la lista</h2>
             <p className="text-sm text-[#77736B]">
-              No garantiza mesa. El personal gestiona los turnos. Esta es una herramienta de
-              demostración.
+              No garantiza mesa. El personal gestiona los turnos. Herramienta de demostración.
             </p>
             <div>
               <label className="text-xs text-[#77736B]">Nombre</label>
@@ -142,7 +208,7 @@ export default function WaitlistPage() {
           </form>
         )}
 
-        {!isStaff && submitted && (
+        {mode === "client" && submitted && (
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#77736B]/10 text-center">
             <p className="text-[#B89B69] text-sm tracking-widest uppercase mb-2">Registrado</p>
             <p className="font-serif text-3xl mb-1">Turno {submitted.turn}</p>
@@ -161,14 +227,17 @@ export default function WaitlistPage() {
           </div>
         )}
 
-        {isStaff && (
+        {/* STAFF PANEL */}
+        {mode === "staff" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-xl">Gestión de lista</h2>
               <span className="text-sm text-[#77736B]">{active.length} activos</span>
             </div>
             {active.length === 0 && (
-              <p className="text-center text-[#77736B] py-8">No hay nadie en espera en este dispositivo.</p>
+              <p className="text-center text-[#77736B] py-8">
+                No hay nadie en espera en este dispositivo.
+              </p>
             )}
             {active.map((e) => (
               <div
@@ -201,6 +270,15 @@ export default function WaitlistPage() {
                 </div>
               </div>
             ))}
+            <button
+              onClick={() => {
+                demoLogout();
+                setMode("client");
+              }}
+              className="text-xs text-[#77736B] underline"
+            >
+              Cerrar sesión staff
+            </button>
           </div>
         )}
       </div>
