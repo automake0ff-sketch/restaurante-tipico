@@ -381,16 +381,58 @@ export default function BusinessPage() {
             </div>
           )}
 
-          {(section === "analitica" || section === "waitlist" || section === "config") && (
-            <div className="bg-white rounded-xl p-6 border border-[#77736B]/10 text-center text-[#77736B]">
-              <p className="font-medium text-[#171715] mb-2">Módulo {section}</p>
-              <p className="text-sm">
-                Preparado para integración. En esta demo sin base de datos, la lista de espera
-                funciona con almacenamiento local del navegador (localStorage) y las métricas son
-                ilustrativas.
+          {section === "waitlist" && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-xl p-6 border border-[#77736B]/10">
+                <h3 className="font-medium mb-2">Lista de espera (sala)</h3>
+                <p className="text-sm text-[#77736B] mb-4">
+                  La gestión operativa de turnos está en la app pública, protegida con acceso demo
+                  para staff. En esta demo no hay base de datos centralizada: los datos viven en
+                  el navegador del dispositivo.
+                </p>
+                <a
+                  href="/waitlist"
+                  className="inline-block bg-[#171715] text-[#F1EBDD] text-sm px-4 py-2.5 rounded-lg"
+                >
+                  Abrir panel de lista de espera
+                </a>
+              </div>
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900">
+                Producción: Supabase (o similar) + roles personal/admin + sincronización entre
+                dispositivos. Estado actual: <strong>simulada / localStorage</strong>.
+              </div>
+            </div>
+          )}
+
+          {section === "analitica" && (
+            <div className="bg-white rounded-xl p-6 border border-[#77736B]/10 text-[#77736B]">
+              <h3 className="font-medium text-[#171715] mb-2">Analítica</h3>
+              <p className="text-sm mb-3">
+                Preparada para eventos reales (visitas, consultas de carta, uso del guía, contactos,
+                waitlist). Hoy no hay recolección activa de analítica.
               </p>
-              <p className="text-xs mt-4">
-                Ningún dato se presenta como histórico real del restaurante.
+              <ul className="text-sm space-y-1 list-disc pl-5">
+                <li>Estado: <strong>configuración pendiente</strong></li>
+                <li>Sin Google Analytics ni alternativa conectada</li>
+                <li>Cumplimiento RGPD: minimización y consentimiento cuando corresponda</li>
+              </ul>
+            </div>
+          )}
+
+          {section === "config" && (
+            <div className="bg-white rounded-xl p-6 border border-[#77736B]/10 text-sm text-[#77736B] space-y-3">
+              <h3 className="font-medium text-[#171715]">Configuración</h3>
+              <p>
+                Acceso actual: autenticación de <strong>demostración</strong> (sessionStorage). No
+                es producción.
+              </p>
+              <p>
+                Integraciones futuras (TPV, WhatsApp Business, reservas, CRM, IA API):{" "}
+                <strong>no disponibles / pendientes de configuración</strong>.
+              </p>
+              <p className="text-xs">
+                Secretos y credenciales deben vivir en variables de entorno de servidor, nunca en
+                el código del cliente.
               </p>
             </div>
           )}
