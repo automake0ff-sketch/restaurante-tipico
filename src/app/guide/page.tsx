@@ -13,7 +13,7 @@ function generateReply(input: string): string {
   if (q.includes("vegetari") || q.includes("veggie")) {
     const list = available.filter((d) => d.tags.includes("vegetarian") || d.tags.includes("vegan"));
     if (list.length === 0) return "En este momento no tengo platos vegetarianos confirmados en la carta digital. Pregunta al personal por opciones del día.";
-    return `Opciones vegetarianas disponibles en la carta:\n\n${list.map((d) => `• ${d.name}`).join("\n")}\n\nRecuerda confirmar alérgenos con el equipo.`;
+    return `Opciones que podrían ser más ligeras o sin carne (etiquetas provisionales, confirmar siempre):\n\n${list.map((d) => `• ${d.name}`).join("\n")}\n\nConfirma siempre alérgenos e ingredientes con el personal. Esta guía no garantiza idoneidad alimentaria.`;
   }
 
   if (q.includes("sin carne") || q.includes("no como carne") || q.includes("pescado")) {
@@ -48,7 +48,7 @@ export default function GuidePage() {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
-      text: "Hola, soy TÍPICO FOOD GUIDE. Puedo recomendarte platos de la carta actual, combinaciones para compartir y opciones según tus preferencias. ¿Qué te apetece?",
+      text: "Hola, soy TÍPICO FOOD GUIDE (recomendador basado en reglas sobre la carta). Puedo sugerir platos y combinaciones. No invento productos ni garantizo alérgenos. Para alergias o dietas, consulta siempre al personal. ¿Qué te apetece?",
     },
   ]);
   const [input, setInput] = useState("");

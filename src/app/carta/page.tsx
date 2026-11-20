@@ -6,41 +6,49 @@ import { menu, categories, type Category, type Dish } from "@/data/menu";
 
 export default function CartaPage() {
   const [activeCat, setActiveCat] = useState<Category | "all">("all");
-  const [veg, setVeg] = useState(false);
-  const [vegan, setVegan] = useState(false);
-  const [spicy, setSpicy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [spicyOnly, setSpicyOnly] = useState(false);
   const [selected, setSelected] = useState<Dish | null>(null);
 
   const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
     return menu.filter((d) => {
       if (!d.available) return false;
       if (activeCat !== "all" && d.category !== activeCat) return false;
-      if (veg && !d.tags.includes("vegetarian") && !d.tags.includes("vegan")) return false;
-      if (vegan && !d.tags.includes("vegan")) return false;
-      if (spicy && !d.tags.includes("spicy")) return false;
+      if (spicyOnly && !d.tags.includes("spicy")) return false;
+      if (q) {
+        const hay = `${d.name} ${d.description} ${d.category}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
       return true;
     });
-  }, [activeCat, veg, vegan, spicy]);
+  }, [activeCat, query, spicyOnly]);
 
   return (
     <div className="min-h-screen bg-[#F1EBDD]">
-      {/* Header */}
       <header className="sticky top-0 z-20 bg-[#171715] text-[#F1EBDD] px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="font-serif text-xl">
+        <Link href="/" className="font-serif text-xl tracking-tight">
           TÍPICO
         </Link>
         <h1 className="text-sm tracking-widest uppercase">Carta</h1>
         <Link href="/guide" className="text-[#B89B69] text-sm">
-          Guía IA
+          Guía
         </Link>
       </header>
 
-      {/* Filters */}
-      <div className="px-4 py-4 border-b border-[#77736B]/15 bg-white/50">
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+      {/* Search + categories */}
+      <div className="px-4 py-4 border-b border-[#77736B]/15 bg-white/60 backdrop-blur">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar plato…"
+          className="w-full mb-3 bg-white border border-[#77736B]/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#B89B69]"
+        />
+        <div className="flex gap-2 overflow-x-auto pb-1">
           <button
             onClick={() => setActiveCat("all")}
-            className={`shrink-0 px-4 py-1.5 rounded-full text-sm ${
+            className={`shrink-0 px-4 py-1.5 rounded-full text-sm transition ${
               activeCat === "all"
                 ? "bg-[#171715] text-[#F1EBDD]"
                 : "bg-white text-[#171715] border border-[#77736B]/20"
@@ -52,7 +60,7 @@ export default function CartaPage() {
             <button
               key={c.id}
               onClick={() => setActiveCat(c.id)}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-sm ${
+              className={`shrink-0 px-4 py-1.5 rounded-full text-sm transition ${
                 activeCat === c.id
                   ? "bg-[#171715] text-[#F1EBDD]"
                   : "bg-white text-[#171715] border border-[#77736B]/20"
@@ -62,22 +70,21 @@ export default function CartaPage() {
             </button>
           ))}
         </div>
-        <div className="flex gap-3 mt-3 text-xs">
+        <div className="flex items-center gap-4 mt-3 text-xs">
           <label className="flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" checked={veg} onChange={(e) => setVeg(e.target.checked)} className="accent-[#B89B69]" />
-            Vegetariano
-          </label>
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" checked={vegan} onChange={(e) => setVegan(e.target.checked)} className="accent-[#B89B69]" />
-            Vegano
-          </label>
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" checked={spicy} onChange={(e) => setSpicy(e.target.checked)} className="accent-[#B89B69]" />
-            Picante
+            <input
+              type="checkbox"
+              checked={spicyOnly}
+              onChange={(e) => setSpicyOnly(e.target.checked)}
+              className="accent-[#B89B69]"
+            />
+            Con toque picante
           </label>
         </div>
-        <p className="text-[10px] text-[#77736B] mt-2">
-          ⚠️ Las alergias deben comunicarse siempre al personal. Información de alérgenos pendiente de confirmación oficial.
+        <p className="text-[11px] text-[#77736B] mt-3 leading-relaxed">
+          ⚠️ <strong>Alergias e intolerancias:</strong> la información de esta carta es orientativa y
+          provisional. Debe consultarse siempre al personal del establecimiento antes de consumir.
+          No se garantiza que ningún plato sea apto para alergias o dietas específicas.
         </p>
       </div>
 
@@ -87,12 +94,16 @@ export default function CartaPage() {
           <article
             key={dish.id}
             onClick={() => setSelected(dish)}
-            className="bg-white rounded-xl overflow-hidden shadow-sm border border-[#77736B]/10 cursor-pointer hover:border-[#B89B69]/40 transition"
+            className="bg-white rounded-xl overflow-hidden shadow-sm border border-[#77736B]/10 cursor-pointer hover:border-[#B89B69]/50 transition"
           >
             <div
-              className="h-40 bg-cover bg-center"
+              className="h-40 bg-cover bg-center relative"
               style={{ backgroundImage: `url(${dish.image})` }}
-            />
+            >
+              <span className="absolute bottom-2 left-2 text-[9px] bg-black/50 text-white px-1.5 py-0.5 rounded">
+                Imagen ilustrativa
+              </span>
+            </div>
             <div className="p-4">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-serif text-lg leading-tight">{dish.name}</h3>
@@ -107,14 +118,9 @@ export default function CartaPage() {
                 <span className="text-sm font-medium text-[#B89B69]">
                   {dish.price !== null ? `${dish.price.toFixed(2)} €` : "Precio ptc."}
                 </span>
-                <div className="flex gap-1">
-                  {dish.tags.includes("vegetarian") && (
-                    <span className="text-[10px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded">Veg</span>
-                  )}
-                  {dish.tags.includes("spicy") && (
-                    <span className="text-[10px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded">Picante</span>
-                  )}
-                </div>
+                <span className="text-[10px] text-[#77736B] uppercase tracking-wide">
+                  {dish.category}
+                </span>
               </div>
             </div>
           </article>
@@ -122,7 +128,7 @@ export default function CartaPage() {
       </div>
 
       {filtered.length === 0 && (
-        <p className="text-center text-[#77736B] py-12">No hay platos con estos filtros.</p>
+        <p className="text-center text-[#77736B] py-16">No hay platos con estos criterios.</p>
       )}
 
       {/* Detail modal */}
@@ -136,9 +142,13 @@ export default function CartaPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className="h-48 bg-cover bg-center rounded-t-2xl"
+              className="h-48 bg-cover bg-center rounded-t-2xl relative"
               style={{ backgroundImage: `url(${selected.image})` }}
-            />
+            >
+              <span className="absolute bottom-2 left-2 text-[10px] bg-black/50 text-white px-2 py-0.5 rounded">
+                Imagen ilustrativa — no es foto oficial del plato
+              </span>
+            </div>
             <div className="p-5">
               <h2 className="font-serif text-2xl">{selected.name}</h2>
               <p className="text-[#77736B] mt-2">{selected.description}</p>
@@ -146,18 +156,18 @@ export default function CartaPage() {
                 <strong>Precio:</strong>{" "}
                 {selected.price !== null
                   ? `${selected.price.toFixed(2)} €`
-                  : "Pendiente de confirmación oficial"}
+                  : "Pendiente de confirmación oficial por el restaurante"}
               </p>
               {selected.ingredients.length > 0 && (
                 <p className="mt-2 text-sm">
-                  <strong>Ingredientes (aprox.):</strong> {selected.ingredients.join(", ")}
+                  <strong>Ingredientes (orientativos):</strong> {selected.ingredients.join(", ")}
                 </p>
               )}
-              {selected.allergens.length > 0 && (
-                <p className="mt-2 text-sm text-amber-700">
-                  <strong>Alérgenos posibles:</strong> {selected.allergens.join(", ")} — confirmar con el personal
-                </p>
-              )}
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900">
+                <strong>Seguridad alimentaria:</strong> cualquier información sobre alérgenos,
+                ingredientes o idoneidad para dietas específicas debe confirmarse siempre con el
+                personal del establecimiento. Esta ficha no constituye garantía.
+              </div>
               {selected.sourceNote && (
                 <p className="mt-3 text-[11px] text-[#77736B] border-t pt-3">
                   {selected.sourceNote}
